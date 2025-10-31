@@ -12,7 +12,7 @@ public:
 wxIMPLEMENT_APP(MyApp);
 
 bool MyApp::OnInit() {
-    MyFrame* frame = new MyFrame("Hangman", wxDefaultPosition, wxSize(800,600));
+    Gui* frame = new Gui("Hangman", wxDefaultPosition, wxSize(800,600));
     frame->Show(true);
     return true;
 }
