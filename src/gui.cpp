@@ -10,6 +10,7 @@ Gui::Gui(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size)
     , m_inputField(nullptr)
     , m_submitButton(nullptr)
+    , m_wrongGuesses(0)
 {
     wxMenu *menuFile = new wxMenu;
     menuFile->Append(ID_About, "&About...\tF1", "Show about dialog");
@@ -94,6 +95,7 @@ void Gui::LetterGuess(wxCommandEvent& WXUNUSED(event)) {
     }
     if (!correctGuess) {
         SetStatusText(wxString::Format("Incorrect guess: %c", m_currentLetter));
+        m_wrongGuesses++;
     }
 }
 

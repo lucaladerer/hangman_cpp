@@ -32,6 +32,8 @@ private:
     wxString m_currentInput;
     wxUnichar m_currentLetter;
 
+    static uint8_t m_wrongGuesses;
+
     wxDECLARE_EVENT_TABLE();
 };
 
