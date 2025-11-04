@@ -29,6 +29,7 @@ Gui::Gui(const wxString& title, const wxPoint& pos, const wxSize& size)
 
 void Gui::createTextInput()
 {
+    // ToDo: Create a text input field and submit button for entering the word to guess
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -82,6 +83,8 @@ void Gui::OnSubmit(wxCommandEvent& WXUNUSED(event)) // Event after clicking subm
 void Gui::StartGame() {
     // TODO: Implement game start logic
     // Placeholder for starting the game logic
+
+    // add a letter guessing input field and button which calls Gui::LetterGuess
 }
 
 void Gui::LetterGuess(wxCommandEvent& WXUNUSED(event)) {
