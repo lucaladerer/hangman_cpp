@@ -2,12 +2,14 @@
 #define HANGMAN_GUI_H
 
 #include <wx/wx.h>
+#include <vector>
 
 // Define custom event IDs
 enum {
     ID_Quit = wxID_EXIT,
     ID_About = wxID_ABOUT,
-    ID_Submit = wxID_HIGHEST + 1
+    ID_Submit = wxID_HIGHEST + 1,   
+    ID_Guess = wxID_HIGHEST + 2
 };
 
 class Gui : public wxFrame {
@@ -21,16 +23,24 @@ private:
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnSubmit(wxCommandEvent& event);
-    void LetterGuess(wxCommandEvent& event);
+    void OnGuess(wxCommandEvent& event);
+    void SetupGuessControls();
+    void SetupHangmanLines();
     void createTextInput();
 
     // UI Controls
     wxTextCtrl* m_inputField;
+    wxTextCtrl* m_guessInputField;
     wxButton* m_submitButton;
-    
+    wxButton* m_guessButton;
+
     // Game state
     wxString m_currentInput;
-    wxUnichar m_currentLetter;
+    wxUniChar m_currentLetter;
+
+    std::vector<wxPanel*> m_letterPanels;
+    std::vector<wxStaticText*> m_letterControls;
+    std::vector<wxUniChar> m_guessedLettersVector;
 
     static uint8_t m_wrongGuesses;
 
