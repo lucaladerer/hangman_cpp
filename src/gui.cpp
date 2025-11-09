@@ -1,4 +1,5 @@
 #include "../lib/gui.h"
+#include <wx/stdpaths.h>
 
 uint8_t Gui::m_wrongGuesses = 0;
 
@@ -26,6 +27,9 @@ Gui::Gui(const wxString& title, const wxPoint& pos, const wxSize& size)
 
     CreateStatusBar();
     SetStatusText("Welcome to Hangman!");
+    
+    // Set white background for the entire frame
+    SetBackgroundColour(*wxWHITE);
 
     createTextInput();
 }
@@ -114,6 +118,7 @@ void Gui::SetupHangmanLines() {
         wxSizer* mainSizer = GetSizer();
         int wordLength = m_currentInput.Length();
         wxBoxSizer* letterBoxSizer = new wxBoxSizer(wxHORIZONTAL);
+
 
         for (int i = 0; i < wordLength; i++) {
             wxPanel* linePanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(20, 2));
@@ -211,16 +216,23 @@ void Gui::OnGuess(wxCommandEvent& WXUNUSED(event)) {
 
         bool correctGuess = false;
         for (const auto& ch : m_currentInput) {
-            if (ch == m_currentLetter) { // Correct guess
+            if (ch == m_currentLetter) {
                 correctGuess = true;
                 SetStatusText(wxString::Format("Correct guess: %c", m_currentLetter));
                 m_guessedLettersVector.push_back(m_currentLetter);
-                // continue;
+
+                // Find all occurrences of the letter in the word and reveal them
+                size_t pos = 0;
+                while ((pos = m_currentInput.find(ch, pos)) != wxString::npos) {
+                    m_letterControls[pos]->SetLabel(wxString::Format("%c", ch));
+                    pos++;
+                }
             }
         }
         if (!correctGuess) {
             SetStatusText(wxString::Format("Incorrect guess: %c. Current wrong guesses: %d", m_currentLetter, m_wrongGuesses + 1));
             m_wrongGuesses++;
+            SetHangmanImage(m_wrongGuesses);
         }
 
         if (m_guessedLettersVector.size() == m_currentInput.length()) {
@@ -230,6 +242,75 @@ void Gui::OnGuess(wxCommandEvent& WXUNUSED(event)) {
             m_guessButton->Disable();
         }
     }
+}
+
+void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
+    // Update the hangman image based on the number of wrong guesses
+    wxString exePath = wxStandardPaths::Get().GetExecutablePath();
+    wxString exeDir = wxPathOnly(exePath);
+    wxString imagePath = wxString::Format("C:\\Users\\lucal\\Desktop\\hangman_cpp\\hangman_cpp\\images\\hangman_%d.png", wrongGuessesIndex);
+
+    // TODO: Change this piece of code, so that the image gets loaded
+    // wxString imagePath = wxString::Format("%s/images/hangman_%d.png", exeDir, wrongGuessesIndex);
+    wxBitmap bmp;
+    if (!bmp.LoadFile(imagePath, wxBITMAP_TYPE_PNG)) {
+        wxMessageBox(wxString::Format("Failed to load image: %s", imagePath), "Error", wxICON_ERROR);
+        return;
+    }
+
+    wxSizer* mainSizer = GetSizer();
+    if (!mainSizer) return;
+
+    // Create the static bitmap control on first use
+    if (!m_hangmanImage) {
+        m_hangmanImage = new wxStaticBitmap(this, wxID_ANY, bmp, wxDefaultPosition, wxSize(128, 128));
+    } else {
+        m_hangmanImage->SetBitmap(bmp);
+    }
+
+    // Ensure the image control is inserted shortly after the input-field sizer
+    // so it appears vertically between the input controls and the letter boxes.
+    // We search for the sizer that contains the input field and insert the image
+    // right after it (if not already added).
+    bool inserted = false;
+    wxSizerItemList& children = mainSizer->GetChildren();
+    int index = 0;
+    for (wxSizerItemList::compatibility_iterator it = children.GetFirst(); it; it = it->GetNext(), ++index) {
+        wxSizerItem* item = it->GetData();
+        wxSizer* childSizer = item->GetSizer();
+        if (!childSizer) continue;
+
+        // Check if this child sizer contains the input field
+        bool hasInputField = false;
+        for (wxSizerItemList::compatibility_iterator it2 = childSizer->GetChildren().GetFirst(); it2; it2 = it2->GetNext()) {
+            wxSizerItem* inner = it2->GetData();
+            if (inner && inner->GetWindow() == m_inputField) {
+                hasInputField = true;
+                break;
+            }
+        }
+
+        if (hasInputField) {
+            // If the image isn't already in the main sizer, insert it after this index.
+            if (m_hangmanImage->GetContainingSizer() != mainSizer) {
+                mainSizer->Insert(index + 1, m_hangmanImage, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 10);
+            } else {
+                // If already in the sizer, ensure it's roughly in the right place by doing a layout.
+                mainSizer->Layout();
+            }
+            inserted = true;
+            break;
+        }
+    }
+
+    // Fallback: if we couldn't find the input sizer, just add the image if it's not added yet
+    if (!inserted && m_hangmanImage->GetContainingSizer() != mainSizer) {
+        mainSizer->Add(m_hangmanImage, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 10);
+    }
+
+    // Refresh layout to show the updated image
+    mainSizer->Layout();
+    Layout();
 }
 
 void Gui::OnQuit(wxCommandEvent& WXUNUSED(event))
