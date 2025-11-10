@@ -20,6 +20,15 @@ Gui::Gui(const wxString& title, const wxPoint& pos, const wxSize& size)
 {
     // init Image handlers
     wxInitAllImageHandlers();
+    wxString exeDir = wxPathOnly(wxStandardPaths::Get().GetExecutablePath());
+    wxString iconPath = wxFileName(exeDir + "/../hangman_cpp/images/icon.png").GetFullPath();
+
+    wxBitmap bmp(iconPath, wxBITMAP_TYPE_PNG);
+    if (bmp.IsOk()) {
+        wxIcon icon;
+        icon.CopyFromBitmap(bmp);
+        SetIcon(icon);  // Sets the window icon
+    }
 
     wxMenu *menuFile = new wxMenu;
     menuFile->Append(ID_About, "&About...\tF1", "Show about dialog");
@@ -36,15 +45,16 @@ Gui::Gui(const wxString& title, const wxPoint& pos, const wxSize& size)
     // Set white background for the entire frame
     SetBackgroundColour(*wxWHITE);
 
+    wxMessageBox("Welcome to Hangman! Please enter a word to start the game. You will have up to 7 incorrect guesses. If you weren't able to guess it withing the 7 guesses, you lose.", "Welcome", wxOK | wxICON_INFORMATION, this);
+
     createTextInput();
 }
 
+// Create text input field and submit button for entering the word to guess
 void Gui::createTextInput()
 {
-    // ToDo: Create a text input field and submit button for entering the word to guess
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *horizontalSizerInput = new wxBoxSizer(wxHORIZONTAL);
-    // wxBoxSizer *horizontalSizerGuess = new wxBoxSizer(wxHORIZONTAL);
 
     // Create input field with placeholder text
     m_inputField = new wxTextCtrl(this, wxID_ANY, "", 
@@ -58,16 +68,6 @@ void Gui::createTextInput()
     // Add controls to horizontal sizer
     horizontalSizerInput->Add(m_inputField, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     horizontalSizerInput->Add(m_submitButton, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
-
-    // // button to enter letter
-    // m_guessInputField = new wxTextCtrl(this, wxID_ANY, "", 
-    //                              wxDefaultPosition, wxSize(40, 20),
-    //                              wxTE_PROCESS_ENTER);
-    // m_guessInputField->SetHint("Enter a letter");
-    // m_guessButton = new wxButton(this, ID_Guess, "Guess");
-
-    // horizontalSizerGuess->Add(m_guessInputField, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
-    // horizontalSizerGuess->Add(m_guessButton, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
     // Add horizontal sizer to main vertical sizer
     sizer->Add(horizontalSizerInput, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, 5);
@@ -117,58 +117,54 @@ void Gui::OnSubmit(wxCommandEvent& WXUNUSED(event)) // Event after clicking subm
     }
 }
 
+// Setup the hangman lines and letter boxes based on the current input word
 void Gui::SetupHangmanLines() {
     // create logic for placing letters
-        // Setup horizontal lines for each letter
-        wxSizer* mainSizer = GetSizer();
-        int wordLength = m_currentInput.Length();
-        wxBoxSizer* letterBoxSizer = new wxBoxSizer(wxHORIZONTAL);
+    // Setup horizontal lines for each letter
+    wxSizer* mainSizer = GetSizer();
+    int wordLength = m_currentInput.Length();
+    wxBoxSizer* letterBoxSizer = new wxBoxSizer(wxHORIZONTAL);
 
 
-        for (int i = 0; i < wordLength; i++) {
-            wxPanel* linePanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(20, 2));
-            linePanel->SetBackgroundColour(*wxBLACK);
-            
-            // Add space between lines
-            if (i > 0) {
-            letterBoxSizer->AddSpacer(10);
-            }
-            
-            // Store the panel for later reference when revealing letters
-            // NOTE: don't add the same panel twice. We'll add it inside the
-            // verticalSizer below (so remove the direct add here).
-            m_letterPanels.push_back(linePanel);
-
-            // Create a static text for the letter (initially empty) and style it
-            wxStaticText* letterText = new wxStaticText(this, wxID_ANY, "",
-                                                       wxDefaultPosition, wxSize(36, 36),
-                                                       wxALIGN_CENTER);
-            // Style: larger bold font and contrasting background to resemble a box
-            wxFont font = letterText->GetFont();
-            font.SetPointSize(14);
-            font.SetWeight(wxFONTWEIGHT_BOLD);
-            letterText->SetFont(font);
-            letterText->SetBackgroundColour(*wxWHITE);
-            letterText->SetForegroundColour(*wxBLACK);
-            letterText->SetMinSize(wxSize(36, 36));
-            m_letterControls.push_back(letterText);
-            
-            // Position letter above line
-            wxBoxSizer* verticalSizer = new wxBoxSizer(wxVERTICAL);
-            // Center the letter above the line and give a small gap
-            verticalSizer->Add(letterText, 0, wxALIGN_CENTER | wxBOTTOM, 4);
-            verticalSizer->Add(linePanel, 0, wxALIGN_CENTER);
-            
-            // Add the vertical sizer which contains the letter text and the
-            // line panel. The panel is only added once (inside this vertical
-            // sizer) to avoid the "already in a sizer" assert.
-            letterBoxSizer->Add(verticalSizer);
+    for (int i = 0; i < wordLength; i++) {
+        wxPanel* linePanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(20, 2));
+        linePanel->SetBackgroundColour(*wxBLACK);
+        
+        // Add space between lines
+        if (i > 0) {
+        letterBoxSizer->AddSpacer(10);
         }
+        
+        m_letterPanels.push_back(linePanel);
 
-        mainSizer->Add(letterBoxSizer, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 20);
-        mainSizer->Layout();
+        // Create a static text for the letter (initially empty) and style it
+        wxStaticText* letterText = new wxStaticText(this, wxID_ANY, "",
+                                                    wxDefaultPosition, wxSize(36, 36),
+                                                    wxALIGN_CENTER);
+        
+                                                    wxFont font = letterText->GetFont();
+        font.SetPointSize(14);
+        font.SetWeight(wxFONTWEIGHT_BOLD);
+        letterText->SetFont(font);
+        letterText->SetBackgroundColour(*wxWHITE);
+        letterText->SetForegroundColour(*wxBLACK);
+        letterText->SetMinSize(wxSize(36, 36));
+        m_letterControls.push_back(letterText);
+        
+        // Position letter above line
+        wxBoxSizer* verticalSizer = new wxBoxSizer(wxVERTICAL);
+        // Center the letter above the line and give a small gap
+        verticalSizer->Add(letterText, 0, wxALIGN_CENTER | wxBOTTOM, 4);
+        verticalSizer->Add(linePanel, 0, wxALIGN_CENTER);
+        
+        letterBoxSizer->Add(verticalSizer);
+    }
+
+    mainSizer->Add(letterBoxSizer, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 20);
+    mainSizer->Layout();
 }
 
+// Setup the guess input field and button
 void Gui::SetupGuessControls() {
     wxSizer* mainSizer = GetSizer();
     wxBoxSizer *horizontalSizerGuess = new wxBoxSizer(wxHORIZONTAL);
@@ -198,6 +194,7 @@ void Gui::SetupGuessControls() {
     });
 }
 
+// Event after clicking guess button or pressing enter in guess input field
 void Gui::OnGuess(wxCommandEvent& WXUNUSED(event)) {
 
     if (m_guessInputField) {
@@ -217,8 +214,6 @@ void Gui::OnGuess(wxCommandEvent& WXUNUSED(event)) {
             return;
         }
 
-        // printf("guess: %c\n", guess[0]);
-
         bool correctGuess = false;
         for (const auto& ch : m_currentInput) {
             if (ch == m_currentLetter) {
@@ -234,10 +229,28 @@ void Gui::OnGuess(wxCommandEvent& WXUNUSED(event)) {
                 }
             }
         }
+
         if (!correctGuess) {
-            SetStatusText(wxString::Format("Incorrect guess: %c. Current wrong guesses: %d", m_currentLetter, m_wrongGuesses + 1));
+            if (std::find(m_wrongGuessedLettersVector.begin(), m_wrongGuessedLettersVector.end(), m_currentLetter) != m_wrongGuessedLettersVector.end()) {
+                SetStatusText(wxString::Format("Letter %c has already been guessed incorrectly", m_currentLetter));
+                m_guessInputField->Clear();
+                return;
+            }
+
+            // Vector for displaying already wrongly guessed letters
+            m_wrongGuessedLettersVector.push_back(m_currentLetter);
+            wxString wrongGuesses = ConcatWrongGuessesString();
+            SetStatusText(wxString::Format("Incorrect guess. Already guessed: %s", wrongGuesses));
+
             m_wrongGuesses++;
             SetHangmanImage(m_wrongGuesses);
+
+            if (m_wrongGuesses >= 7) {
+                SetStatusText(wxString::Format("Game Over! The word was: %s", m_currentInput));
+                // Optionally disable further input
+                m_guessInputField->Disable();
+                m_guessButton->Disable();
+            }
         }
 
         if (m_guessedLettersVector.size() == m_currentInput.length()) {
@@ -249,10 +262,20 @@ void Gui::OnGuess(wxCommandEvent& WXUNUSED(event)) {
     }
 }
 
+// Concatenate wrong guessed letters into a single string
+wxString Gui::ConcatWrongGuessesString() {
+    wxString outString;
+    for (const auto& ch : m_wrongGuessedLettersVector) {
+        outString += ch;
+        outString += " ";
+    }
+    return outString;
+}
+
+// Update hangman image based on wrong guesses
 void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
     // Debug log
     wxLogDebug("SetHangmanImage called — wrongGuessesIndex=%d", wrongGuessesIndex);
-
 
     // Update the hangman image based on the number of wrong guesses
     wxString exePath = wxStandardPaths::Get().GetExecutablePath();
@@ -260,9 +283,6 @@ void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
     wxString imagePath = wxFileName(exeDir + "/../hangman_cpp/images",
                                 wxString::Format("hangman_%d.png", wrongGuessesIndex))
                                 .GetFullPath();
-
-    // DEBUG
-    // wxMessageBox(imagePath, "Image path used");
 
     wxBitmap bmp;
     if (!bmp.LoadFile(imagePath, wxBITMAP_TYPE_PNG)) {
@@ -288,15 +308,13 @@ void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
 
     // Create the static bitmap control on first use
     if (!m_hangmanImage) {
-        m_hangmanImage = new wxStaticBitmap(this, wxID_ANY, bmp, wxDefaultPosition, wxSize(128, 128));
+        m_hangmanImage = new wxStaticBitmap(this, wxID_ANY, bmp, wxDefaultPosition, wxSize(300, 300));
     } else {
         m_hangmanImage->SetBitmap(bmp);
+        m_hangmanImage->Refresh();
+        m_hangmanImage->Update();
     }
 
-    // Ensure the image control is inserted shortly after the input-field sizer
-    // so it appears vertically between the input controls and the letter boxes.
-    // We search for the sizer that contains the input field and insert the image
-    // right after it (if not already added).
     bool inserted = false;
     wxSizerItemList& children = mainSizer->GetChildren();
     int index = 0;
@@ -320,7 +338,6 @@ void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
             if (m_hangmanImage->GetContainingSizer() != mainSizer) {
                 mainSizer->Insert(index + 1, m_hangmanImage, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 10);
             } else {
-                // If already in the sizer, ensure it's roughly in the right place by doing a layout.
                 mainSizer->Layout();
             }
             inserted = true;
@@ -328,7 +345,6 @@ void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
         }
     }
 
-    // Fallback: if we couldn't find the input sizer, just add the image if it's not added yet
     if (!inserted && m_hangmanImage->GetContainingSizer() != mainSizer) {
         mainSizer->Add(m_hangmanImage, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 10);
     }
@@ -338,11 +354,13 @@ void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
     Layout();
 }
 
+// Event handler for quitting the application
 void Gui::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
     Close(true);
 }
 
+// Event handler for showing the about dialog
 void Gui::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
     wxMessageBox("This is a small Hangman game using wxWidgets", "About Hangman",

@@ -28,6 +28,7 @@ private:
     void SetupHangmanLines();
     void createTextInput();
     void SetHangmanImage(uint8_t wrongGuessesIndex);
+    wxString ConcatWrongGuessesString();
 
     // UI Controls
     wxTextCtrl* m_inputField;
@@ -42,6 +43,7 @@ private:
     std::vector<wxPanel*> m_letterPanels;
     std::vector<wxStaticText*> m_letterControls;
     std::vector<wxUniChar> m_guessedLettersVector;
+    std::vector<wxUniChar> m_wrongGuessedLettersVector;
 
     wxStaticBitmap* m_hangmanImage;
 
