@@ -1,6 +1,8 @@
 # hangman_cpp
 
-This repository contains a small Hangman project in C++.
+This repository contains a small Hangman project in C++. It is shown in the screenshot below.
+
+![Hangman screenshot](images/window_screenshot.png "Screenshot of the game")
 
 This branch adds a minimal wxWidgets-based GUI skeleton and CMake build files to help you get started with wxWidgets on Windows.
 
