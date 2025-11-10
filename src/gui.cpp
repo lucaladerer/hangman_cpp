@@ -1,5 +1,7 @@
 #include "../lib/gui.h"
 #include <wx/stdpaths.h>
+#include <wx/filename.h>
+
 
 uint8_t Gui::m_wrongGuesses = 0;
 
@@ -14,8 +16,11 @@ Gui::Gui(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size)
     , m_inputField(nullptr)
     , m_submitButton(nullptr)
-    // , m_wrongGuesses(0)
+    , m_hangmanImage(nullptr)
 {
+    // init Image handlers
+    wxInitAllImageHandlers();
+
     wxMenu *menuFile = new wxMenu;
     menuFile->Append(ID_About, "&About...\tF1", "Show about dialog");
     menuFile->AppendSeparator();
@@ -245,21 +250,41 @@ void Gui::OnGuess(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void Gui::SetHangmanImage(uint8_t wrongGuessesIndex) {
+    // Debug log
+    wxLogDebug("SetHangmanImage called — wrongGuessesIndex=%d", wrongGuessesIndex);
+
+
     // Update the hangman image based on the number of wrong guesses
     wxString exePath = wxStandardPaths::Get().GetExecutablePath();
-    wxString exeDir = wxPathOnly(exePath);
-    wxString imagePath = wxString::Format("C:\\Users\\lucal\\Desktop\\hangman_cpp\\hangman_cpp\\images\\hangman_%d.png", wrongGuessesIndex);
+    wxString exeDir = wxPathOnly(wxStandardPaths::Get().GetExecutablePath());
+    wxString imagePath = wxFileName(exeDir + "/../hangman_cpp/images",
+                                wxString::Format("hangman_%d.png", wrongGuessesIndex))
+                                .GetFullPath();
 
-    // TODO: Change this piece of code, so that the image gets loaded
-    // wxString imagePath = wxString::Format("%s/images/hangman_%d.png", exeDir, wrongGuessesIndex);
+    // DEBUG
+    // wxMessageBox(imagePath, "Image path used");
+
     wxBitmap bmp;
     if (!bmp.LoadFile(imagePath, wxBITMAP_TYPE_PNG)) {
         wxMessageBox(wxString::Format("Failed to load image: %s", imagePath), "Error", wxICON_ERROR);
         return;
     }
 
+    if (!bmp.IsOk()) {
+        wxMessageBox("Bitmap invalid after loading!", "Error");
+        return;
+    }
+
+
     wxSizer* mainSizer = GetSizer();
-    if (!mainSizer) return;
+    if (!mainSizer) {
+        wxLogError("Main sizer is null in SetHangmanImage!");
+        return;
+    }
+    if (!m_inputField) {
+        wxLogError("Input field is null in SetHangmanImage!");
+    }
+
 
     // Create the static bitmap control on first use
     if (!m_hangmanImage) {
